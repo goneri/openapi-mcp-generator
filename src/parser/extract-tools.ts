@@ -7,6 +7,16 @@ import { generateOperationId } from '../utils/code-gen.js';
 import { McpToolDefinition } from '../types/index.js';
 import { shouldIncludeOperationForMcp } from '../utils/helpers.js';
 
+export interface ParameterObjectWithType extends OpenAPIV3.ParameterObject {
+  name: string;
+  description?: string;
+  in: string;
+  type?: JSONSchema7TypeName;
+  required?: boolean;
+  schema?: OpenAPIV3.SchemaObject;
+}
+
+
 /**
  * Extracts tool definitions from an OpenAPI document
  *
@@ -124,8 +134,8 @@ export function generateInputSchemaAndDetails(operation: OpenAPIV3.OperationObje
   const required: string[] = [];
 
   // Process parameters
-  const allParameters: OpenAPIV3.ParameterObject[] = Array.isArray(operation.parameters)
-    ? operation.parameters.map((p) => p as OpenAPIV3.ParameterObject)
+  const allParameters: ParameterObjectWithType[] = Array.isArray(operation.parameters)
+    ? operation.parameters.map((p) => p as ParameterObjectWithType)
     : [];
 
   allParameters.forEach((param) => {
@@ -173,6 +183,16 @@ export function generateInputSchemaAndDetails(operation: OpenAPIV3.OperationObje
       if (opRequestBody.required) required.push('requestBody');
     }
   }
+
+  allParameters.forEach((item) => {
+    if (properties[item.name]) return;
+    properties[item.name] = {
+      description: item.description,
+      type: item.type ?? item.schema?.type,
+    };
+
+    if (item.required) required.push(item.name);
+  });
 
   // Combine everything into a JSON Schema
   const inputSchema: JSONSchema7 = {
