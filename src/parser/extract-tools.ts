@@ -90,6 +90,8 @@ export function extractToolsFromApi(
       const securityRequirements =
         operation.security === null ? globalSecurity : operation.security || globalSecurity;
 
+      const deprecated = operation.deprecated || false;
+
       // Create the tool definition
       tools.push({
         name: finalToolName,
@@ -102,6 +104,7 @@ export function extractToolsFromApi(
         requestBodyContentType,
         securityRequirements,
         operationId: baseName,
+        deprecated,
       });
     }
   }
